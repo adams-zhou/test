@@ -1,0 +1,57 @@
+main.js
+const { app, BrowserWindow, ipcMain } = require('electron');
+const axios = require('axios');
+
+function createWindow () {
+   const win = new BrowserWindow({
+      width: 800,
+      height: 600,
+      webPreferences: {
+         nodeIntegration: true,
+         contextIsolation: false
+      }
+   })
+
+   win.loadFile('index.html') 
+   ipcMain.on('fetch-data', async (event, args) => {
+      try {
+         const response = await axios.get('https://catfact.ninja/fact');
+         event.reply('fetch-data-response', response.data);
+      } catch (error) {
+         console.error(error);
+      }
+   });
+}
+app.whenReady().then(createWindow);
+
+index.js
+const { ipcRenderer } = require('electron');
+const responseElement = document.getElementById('response');
+
+ipcRenderer.on('fetch-data-response', (event, data) => {
+   responseElement.innerHTML = JSON.stringify(data);
+});
+
+ipcRenderer.send('fetch-data'); 
+
+index.html
+<html>
+<head>
+   <meta charset="UTF-8">
+   <title>My Electron App</title>
+   <style>
+      body{
+         text-align: center;
+         padding: 1rem;
+      }
+      p{
+         color: green;
+      }
+   </style>
+</head>
+<body>
+   <h1> HTTP Request Response: </h1>
+   <p id = "response" > </p>
+   <script src = "./index.js" > </script>
+</body>
+</html>
